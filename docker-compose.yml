@@ -1,0 +1,41 @@
+version: '3.5'
+
+services:
+
+  npm_app:
+    container_name: npm-app
+    environment:
+      DISABLE_IPV6: 'true'
+      VIRTUAL_HOST: npm.${NGINX_HOSTNAME}
+      LETSENCRYPT_HOST: npm.${NGINX_HOSTNAME}
+      LETSENCRYPT_EMAIL: npm@no-reply.com
+    depends_on:
+      - npm_db
+    image: jc21/nginx-proxy-manager:${NPM_APP_TAG}
+    restart: always
+    volumes:
+      - ./config.json:/app/config/production.json
+      - data:/data
+      - letsencrypt:/etc/letsencrypt
+
+  npm_db:
+    container_name: npm-db
+    environment:
+      MYSQL_ROOT_PASSWORD: '${NPM_DB_PASS}'
+      MYSQL_DATABASE: 'npm'
+      MYSQL_USER: '${NPM_DB_USER}'
+      MYSQL_PASSWORD: '${NPM_DB_PASS}'
+    image: jc21/mariadb-aria:${NPM_DB_TAG}
+    restart: always
+    volumes:
+      - db:/var/lib/mysql
+
+volumes:
+  data:
+  letsencrypt:
+  db:
+
+networks:
+  default:
+    external:
+      name: ${NGINX_PROXY_NET}
